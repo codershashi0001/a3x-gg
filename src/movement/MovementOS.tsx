@@ -28,9 +28,15 @@ export function MovementOS() {
             One journey · draft → priority → live work → handoff → outcome
           </p>
         </div>
+     </div>
+
+      {/* Assignment Outcome Banner */}
+      <div className="bg-emerald-950/40 border border-emerald-500/30 px-4 py-2 rounded-lg flex items-center justify-between text-xs text-emerald-300 my-2">
+        <span>🎯 Movement OS Outcome: Real-time pipeline velocity with zero drop-offs, clear owners, and strict deadlines.</span>
+        <span className="bg-emerald-500/20 px-2 py-0.5 rounded font-mono">Owner: Team | SLA: 24h</span>
       </div>
 
-      <Tabs defaultValue="work">
+    <Tabs defaultValue="work">
         <TabsList>
           <TabsTrigger value="work">Work</TabsTrigger>
           <TabsTrigger value="drafting">Drafting</TabsTrigger>

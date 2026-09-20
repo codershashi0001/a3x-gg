@@ -43,3 +43,13 @@ export async function fetchCallRecords(limit = 200) {
   if (error) throw error;
   return data ?? [];
 }
+
+export async function markCallMessageSent(clientId: string): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("call_records")
+    .update({ message_sent: true })
+    .eq("client_id", clientId);
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}

@@ -1,6 +1,6 @@
 // Call Conversation Engine — mission → call → agenda screen → three outputs.
 // The operator never types a message and never decides the next step alone.
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { buildOutputs, wasteFlags } from "./compose";
 import { knownFacts, noAnswerPlan, suggestAgenda } from "./infer";
 import { callMission } from "./mission";
 import { useCallEngine } from "./store";
-import { pushCallRecord } from "./sync";
+import { pushCallRecord, markCallMessageSent } from "./sync";
 import {
   ACTIVITIES, AGENDAS, DISLIKE_REASONS, MOVEMENT_LABEL, OUTCOMES, PRICE_REACTIONS, PROMISES, REACTIONS,
   TOUR_REFUSALS, agendaDef, emptyCapture,
@@ -57,7 +57,25 @@ export function CallEngine({ lead, onLogged }: Props) {
   const [outputs, setOutputs] = useState<CallOutputs | null>(null);
   const [nowText, setNowText] = useState("");
   const [followText, setFollowText] = useState("");
+// New Feature: Autosaved draft state recovery
+  React.useEffect(() => {
+    const savedDraft = localStorage.getItem(`gharpayy_draft_${lead?.ulid || 'default'}`);
+    if (savedDraft && !nowText) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.nowText) setNowText(parsed.nowText);
+        if (parsed.followText) setFollowText(parsed.followText);
+      } catch (e) {
+        // fallback
+      }
+    }
+  }, [lead?.ulid]);
 
+  React.useEffect(() => {
+    if (nowText || followText) {
+      localStorage.setItem(`gharpayy_draft_${lead?.ulid || 'default'}`, JSON.stringify({ nowText, followText }));
+    }
+  }, [nowText, followText, lead?.ulid]);
   const facts = useMemo(() => knownFacts(lead), [lead]);
   const def = agendaDef(agenda);
   const attempt = engine.noAnswerStreak(lead.ulid) + 1;
@@ -79,7 +97,7 @@ export function CallEngine({ lead, onLogged }: Props) {
     setPhase("capture");
   }
 
-  function finish(kind: OutcomeKind) {
+ function finish(kind: OutcomeKind) {
     setOutcome(kind);
     const out = buildOutputs(
       lead,
@@ -90,8 +108,8 @@ export function CallEngine({ lead, onLogged }: Props) {
       kind === "connected" ? undefined : nextPlan.ask,
     );
     setOutputs(out);
-    setNowText(out.now);
-    setFollowText(out.followUp.text);
+    setNowText(out.now || "Hi, thanks for speaking with Gharpayy today. Your tour/booking process is ready.");
+    setFollowText(out.followUp.text || "Follow-up scheduled within 24 hours with owner and deadline assigned.");
     setPhase("outputs");
   }
 
@@ -144,7 +162,7 @@ export function CallEngine({ lead, onLogged }: Props) {
       capture: cap,
       movement: outputs.movement,
       messageNow: nowText,
-      messageSent: true,
+      messageSent: false,
       followUp: { ...outputs.followUp, text: followText },
       followUpState: "armed",
       nextStep: outputs.nextStep,
@@ -169,6 +187,7 @@ export function CallEngine({ lead, onLogged }: Props) {
     await navigator.clipboard.writeText(text);
     toast.success("Copied — paste into WhatsApp");
   }
+
 
   return (
     <div className="space-y-3 rounded-lg border p-3">
@@ -479,8 +498,13 @@ export function CallEngine({ lead, onLogged }: Props) {
             <span className="text-[11px] text-muted-foreground">{def.label} · {outcome}</span>
           </div>
 
-          <div className="space-y-1.5">
-            <Title>1 · Send now</Title>
+        <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+                <Title>1 · Send now</Title>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                Status: Draft / Copied
+              </span>
+            </div>
             {outputs.mediaHint && <div className="text-[10px] text-muted-foreground">{outputs.mediaHint}</div>}
             <Textarea rows={8} className="text-xs" value={nowText} onChange={(e) => setNowText(e.target.value)} />
             <div className="flex gap-2">

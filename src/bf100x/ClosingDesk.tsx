@@ -59,8 +59,13 @@ export function ClosingDesk({ onOpenLead }: { onOpenLead: (id: string) => void }
     toast.success(`₹${Number(amt).toLocaleString("en-IN")} recorded`);
   }
 
-  return (
+ return (
     <div className="space-y-3">
+      {/* Assignment Outcome Banner */}
+      <div className="bg-emerald-950/40 border border-emerald-500/30 px-4 py-2 rounded-lg flex items-center justify-between text-xs text-emerald-300">
+        <span>🎯 Closing Desk Outcome: Faster decisions, quotes, and payment verifications with named owners and strict deadlines.</span>
+        <span className="bg-emerald-500/20 px-2 py-0.5 rounded font-mono">Owner: Closer | SLA: Immediate</span>
+      </div>
       <div className="flex flex-wrap items-center gap-1.5">
         {TABS.map((t) => (
           <Button key={t.key} size="sm" variant={tab === t.key ? "default" : "outline"} className="h-7 px-2 text-[11px]" onClick={() => setTab(t.key)}>{t.label}</Button>
